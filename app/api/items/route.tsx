@@ -15,7 +15,11 @@ async function verifyJwt(token: string) {
 export async function GET(req: Request) {
   try {
     // Get token from cookies
-    const token = (cookies() as any).get("token")?.value
+   
+
+const cookieStore = await cookies(); // await the cookies() function
+const token = cookieStore.get("token")?.value; // now get the cookie safely
+
     if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
     const payload = await verifyJwt(token)

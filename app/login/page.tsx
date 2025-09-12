@@ -35,6 +35,7 @@ export default function LoginPage() {
 
       setLoading(false)
       router.push("/")
+      router.refresh() // ensures new data is fetched
     }
     catch
     {

@@ -25,8 +25,10 @@ export async function POST(req: Request) {
       return NextResponse.json({ message: "Invalid payment method" }, { status: 400 })
     }
 
-    // 🔐 Verify JWT from cookie and get username
-    const token = (cookies() as any).get("token")?.value
+
+const cookieStore = await cookies(); 
+const token = cookieStore.get("token")?.value; 
+
     if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
 
     const payload = await verifyJwt(token)
