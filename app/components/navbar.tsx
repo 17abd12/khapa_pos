@@ -7,8 +7,11 @@ import { useState } from "react"
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
+  const [exportingOrders, setExportingOrders] = useState(false)
+  const [exportingInventory, setExportingInventory] = useState(false)
+
   const router = useRouter()
-  const pathname = usePathname() // get current path
+  const pathname = usePathname()
 
   const onLogout = async () => {
     setLoggingOut(true)
@@ -21,9 +24,36 @@ export default function Navbar() {
     }
   }
 
-  const onLogin = () => router.push("/login")
-
   const isLoginPage = pathname === "/login"
+
+  // 🔽 Export CSV helpers (with loading state)
+  const exportCSV = async (type: "orders" | "inventory") => {
+    if (type === "orders") setExportingOrders(true)
+    if (type === "inventory") setExportingInventory(true)
+
+    try {
+      const res = await fetch(`/api/export?type=${type}`)
+      if (!res.ok) throw new Error("Failed to export")
+
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `${type}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
+    } catch (err) {
+      console.error(err)
+      alert("Export failed, please try again.")
+    } finally {
+      if (type === "orders") setExportingOrders(false)
+      if (type === "inventory") setExportingInventory(false)
+    }
+  }
 
   return (
     <nav className="bg-slate-800 px-6 py-3 text-white">
@@ -44,7 +74,7 @@ export default function Navbar() {
         {/* Desktop Menu */}
         <ul className="hidden md:flex gap-6 items-center">
           {isLoginPage ? (
-            <li className=" font-semibold">Please login</li>
+            <li className="font-semibold">Please login</li>
           ) : (
             <>
               <li>
@@ -61,6 +91,33 @@ export default function Navbar() {
                 <Link href="/inventory/view" className="hover:text-gray-300">
                   Inventory
                 </Link>
+              </li>
+              {/* 🔽 Export buttons */}
+              <li>
+                <button
+                  onClick={() => exportCSV("orders")}
+                  disabled={exportingOrders}
+                  className={`px-3 py-2 rounded-lg font-medium ${
+                    exportingOrders
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {exportingOrders ? "Exporting..." : "Export Orders CSV"}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => exportCSV("inventory")}
+                  disabled={exportingInventory}
+                  className={`px-3 py-2 rounded-lg font-medium ${
+                    exportingInventory
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {exportingInventory ? "Exporting..." : "Export Inventory CSV"}
+                </button>
               </li>
               <li>
                 <button
@@ -101,6 +158,35 @@ export default function Navbar() {
                 <Link href="/inventory/view" className="hover:text-gray-300">
                   Inventory
                 </Link>
+              </li>
+              {/* 🔽 Export buttons mobile */}
+              <li>
+                <button
+                  onClick={() => exportCSV("orders")}
+                  disabled={exportingOrders}
+                  className={`px-3 py-2 rounded-lg font-medium w-full ${
+                    exportingOrders
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
+                >
+                  {exportingOrders ? "Exporting..." : "Export Orders CSV"}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => exportCSV("inventory")}
+                  disabled={exportingInventory}
+                  className={`px-3 py-2 rounded-lg font-medium w-full ${
+                    exportingInventory
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {exportingInventory
+                    ? "Exporting..."
+                    : "Export Inventory CSV"}
+                </button>
               </li>
               <li>
                 <button
