@@ -28,38 +28,39 @@ export async function GET(req: Request) {
     let data: any[] = [];
 
     if (type === "orders") {
-      const { data: orders, error } = await supabase
-        .from("orders")
-        .select(
-          `id,
-          paymentMethod,
-          added_by,
-          added_at,
-          order_items (
-            name,
-            sale_price,
-            quantity
-          )`
-        )
-        .order("added_at", { ascending: false });
+  const { data: orders, error } = await supabase
+    .from("orders")
+    .select(
+      `id,
+      paymentMethod,
+      added_by,
+      added_at,
+      order_items (
+        name,
+        sale_price,
+        quantity,
+        cost_price
+      )`
+    )
+    .order("added_at", { ascending: false });
 
-      if (error) throw error;
+  if (error) throw error;
 
-      data = (orders || []).map((o: any) => ({
-        orderId: o.id,
-        paymentMethod: o.paymentMethod,
-        cashier: o.added_by,
-        date: o.added_at,
-        totalBill: (o.order_items || []).reduce(
-          (sum: number, it: any) =>
-            sum + Number(it.sale_price || 0) * Number(it.quantity || 0),
-          0
-        ),
-        items: (o.order_items || [])
-          .map((it: any) => `${it.name} x${it.quantity} @${it.sale_price}`)
-          .join(" | "),
-      }));
-    }
+  // ✅ Flatten orders → one row per item
+  data = (orders || []).flatMap((o: any) =>
+    (o.order_items || []).map((it: any) => ({
+      orderId: o.id,
+      paymentMethod: o.paymentMethod,
+      cashier: o.added_by,
+      date: o.added_at,
+      item: it.name,
+      quantity: it.quantity,
+      sale_price: it.sale_price,
+      cost_price: it.cost_price,
+      totalItemPrice: Number(it.sale_price || 0) * Number(it.quantity || 0),
+    }))
+  );
+}
 
     if (type === "inventory") {
       const { data: items, error } = await supabase

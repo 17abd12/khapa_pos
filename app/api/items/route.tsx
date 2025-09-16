@@ -15,35 +15,38 @@ async function verifyJwt(token: string) {
 export async function GET(req: Request) {
   try {
     // Get token from cookies
-   
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
 
-const cookieStore = await cookies(); // await the cookies() function
-const token = cookieStore.get("token")?.value; // now get the cookie safely
+    if (!token) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-    if (!token) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    const payload = await verifyJwt(token);
+    const username: string | undefined = (payload as any)?.username;
 
-    const payload = await verifyJwt(token)
-    const username: string | undefined = (payload as any)?.username
-    if (!username) return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
+    if (!username) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
 
-    // fetch inventory
+    // Fetch inventory ordered by name ASC
     const { data, error } = await supabase
       .from("inventory")
       .select("id, name, sale_price")
-      .order("name", { ascending: true })
+      .order("name", { ascending: true });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 })
+      return NextResponse.json({ error: error.message }, { status: 500 });
     }
 
-    // ensure uniqueness by name
-    const unique = Array.from(new Map(data.map(i => [i.name, i])).values())
+    // Ensure uniqueness by name (keeps first occurrence due to order ASC)
+    const unique = Array.from(new Map(data.map(i => [i.name.toLowerCase(), i])).values());
 
-    return NextResponse.json(unique)
+    return NextResponse.json(unique, { status: 200 });
   } catch (err: unknown) {
     if (err instanceof Error) {
-      return NextResponse.json({ error: err.message }, { status: 500 })
+      return NextResponse.json({ error: err.message }, { status: 500 });
     }
-    return NextResponse.json({ error: "Unknown error" }, { status: 500 })
+    return NextResponse.json({ error: "Unknown error" }, { status: 500 });
   }
 }

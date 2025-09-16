@@ -6,7 +6,8 @@ export async function GET() {
   try {
     const { data, error } = await supabase
       .from("inventory")
-      .select("id, name, no_of_units, sale_price, cost_price, added_by, added_at");
+      .select("id, name, no_of_units, sale_price, cost_price, added_by, added_at")
+      .order("name", { ascending: true }); // ✅ Order by name ASC
 
     if (error) {
       console.error("❌ Supabase fetch error:", error);
@@ -25,6 +26,7 @@ export async function GET() {
     );
   }
 }
+
 
 export async function POST(req: Request) {
   try {
