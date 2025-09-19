@@ -2,7 +2,7 @@ import { google } from "googleapis";
 
 type SheetForm = {
     iten_name: string
-    quantity : number
+    quantity: number
     price: number
     payment_method: string
 }
@@ -40,21 +40,6 @@ export const addToSalesSheet = async (formData: SheetForm) => {
             values: [
                 [iten_name, quantity, price, payment_method, new Date().toLocaleString()]
 
-            ]
-        }
-    })
-}
-
-export const addToInventorySheet = async (formData: SheetForm) => {
-    const sheets = getGoogleSheets()
-    const { iten_name, quantity, price, payment_method } = formData
-    await sheets.spreadsheets.values.append({
-        spreadsheetId: process.env.GOOGLE_SHEET_ID,
-        range: 'Inventory',
-        valueInputOption: 'USER_ENTERED',
-        requestBody: {
-            values: [
-                [iten_name, quantity, price, payment_method, new Date().toLocaleString()]
             ]
         }
     })
