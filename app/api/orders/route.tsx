@@ -3,6 +3,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { supabase } from "@/libs/supabaseClient"
 import { verifyJwt } from "@/libs/jwt"
+import { addToSalesSheet } from "@/libs/sheets";
 
 type IncomingItem = { id: string; quantity: number }
 
@@ -124,6 +125,17 @@ const token = cookieStore.get("token")?.value;
         )
       }
     }
+
+    // add to google sheets
+    for (const row of invRows) {
+      const quantity = qtyMap.get(row.id)!;
+      await addToSalesSheet({
+        iten_name: row.name,
+        quantity: quantity,
+        price: row.sale_price,
+        payment_method: paymentMethod || "Cash",
+      });
+    } 
 
     return NextResponse.json({ message: "Order placed", orderId: order.id, paymentMethod: order.paymentMethod }, { status: 201 })
   } catch (e: any) {
