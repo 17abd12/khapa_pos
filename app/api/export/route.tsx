@@ -1,17 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/libs/supabaseClient";
-
-// Utility: convert array of objects → CSV string
-function toCSV(data: any[]): string {
-  if (!data || data.length === 0) return "";
-
-  const headers = Object.keys(data[0]);
-  const rows = data.map(obj =>
-    headers.map(h => JSON.stringify(obj[h] ?? "")).join(",")
-  );
-
-  return [headers.join(","), ...rows].join("\n");
-}
+import ExcelJS from "exceljs";
 
 export async function GET(req: Request) {
   try {
@@ -28,39 +17,39 @@ export async function GET(req: Request) {
     let data: any[] = [];
 
     if (type === "orders") {
-  const { data: orders, error } = await supabase
-    .from("orders")
-    .select(
-      `id,
-      paymentMethod,
-      added_by,
-      added_at,
-      order_items (
-        name,
-        sale_price,
-        quantity,
-        cost_price
-      )`
-    )
-    .order("added_at", { ascending: false });
+      const { data: orders, error } = await supabase
+        .from("orders")
+        .select(
+          `id,
+          paymentMethod,
+          added_by,
+          added_at,
+          order_items (
+            name,
+            sale_price,
+            quantity,
+            cost_price
+          )`
+        )
+        .order("added_at", { ascending: false });
 
-  if (error) throw error;
+      if (error) throw error;
 
-  // ✅ Flatten orders → one row per item
-  data = (orders || []).flatMap((o: any) =>
-    (o.order_items || []).map((it: any) => ({
-      orderId: o.id,
-      paymentMethod: o.paymentMethod,
-      cashier: o.added_by,
-      date: o.added_at,
-      item: it.name,
-      quantity: it.quantity,
-      sale_price: it.sale_price,
-      cost_price: it.cost_price,
-      totalItemPrice: Number(it.sale_price || 0) * Number(it.quantity || 0),
-    }))
-  );
-}
+      // ✅ Flatten orders → one row per item
+      data = (orders || []).flatMap((o: any) =>
+        (o.order_items || []).map((it: any) => ({
+          orderId: o.id,
+          paymentMethod: o.paymentMethod,
+          cashier: o.added_by,
+          date: o.added_at,
+          item: it.name,
+          quantity: it.quantity,
+          sale_price: it.sale_price,
+          cost_price: it.cost_price,
+          totalItemPrice: Number(it.sale_price || 0) * Number(it.quantity || 0),
+        }))
+      );
+    }
 
     if (type === "inventory") {
       const { data: items, error } = await supabase
@@ -70,7 +59,6 @@ export async function GET(req: Request) {
         );
 
       if (error) throw error;
-
       data = items || [];
     }
 
@@ -78,18 +66,29 @@ export async function GET(req: Request) {
       return NextResponse.json({ message: "No data found" }, { status: 404 });
     }
 
-    // Convert to CSV
-    const csv = toCSV(data);
+    // ✅ Convert to XLSX using exceljs
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet(type);
 
-    return new NextResponse(csv, {
+    worksheet.columns = Object.keys(data[0]).map((key) => ({
+      header: key,
+      key,
+    }));
+
+    data.forEach((row) => worksheet.addRow(row));
+
+    const buffer = await workbook.xlsx.writeBuffer();
+
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv",
-        "Content-Disposition": `attachment; filename="${type}.csv"`,
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="${type}.xlsx"`,
       },
     });
   } catch (err: any) {
-    console.error("❌ CSV export error:", err.message);
+    console.error("❌ XLSX export error:", err.message);
     return NextResponse.json(
       { message: "Server error", error: err.message },
       { status: 500 }

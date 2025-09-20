@@ -149,10 +149,13 @@ const token = cookieStore.get("token")?.value;
 // ----------------- GET (List Orders) -----------------
 // app/api/orders/route.ts
 
-
-export async function GET() {
+export async function GET(req: Request) {
   try {
-    const { data: orders, error: orderErr } = await supabase
+    const { searchParams } = new URL(req.url)
+    const startDate = searchParams.get("startDate")
+    const endDate = searchParams.get("endDate")
+
+    let query = supabase
       .from("orders")
       .select(
         `id,
@@ -163,10 +166,16 @@ export async function GET() {
           name,
           sale_price,
           quantity
-        )
-      `
+        )`
       )
       .order("added_at", { ascending: false })
+
+    // ⏳ Apply date filtering if provided
+    if (startDate && endDate) {
+      query = query.gte("added_at", startDate).lte("added_at", endDate)
+    }
+
+    const { data: orders, error: orderErr } = await query
 
     if (orderErr) {
       return NextResponse.json(
@@ -182,7 +191,7 @@ export async function GET() {
     // 🧮 Add total bill per order
     const formatted = orders.map((o: any) => ({
       orderId: o.id,
-      paymentMethod:o.paymentMethod,
+      paymentMethod: o.paymentMethod,
       orderCashier: o.added_by,
       orderDate: o.added_at,
       items: o.order_items || [],

@@ -80,10 +80,10 @@ export async function POST(req: Request) {
           .insert([
             {
               name,
-              cost_price: costPrice,
-              sale_price: sale_price, // Use value from request
-              no_of_units: units,
-              added_by: payload.name, // ✅ Add user name from JWT
+              cost_price: costPrice ?? 0, // fallback to 0 if not provided
+              sale_price: sale_price ?? 0,
+              no_of_units: units ?? 0,
+              added_by: payload.name,
             },
           ])
           .select()
@@ -99,18 +99,28 @@ export async function POST(req: Request) {
 
         results.push(inserted);
       } else {
-        // 📝 Update existing item, keep previous sale_price
+        // 📝 Update existing item: replace values if provided, else keep existing
         const newCostPrice =
-          Number(existing.cost_price) !== Number(costPrice)
-            ? (Number(existing.cost_price) + Number(costPrice)) / 2
+          costPrice !== undefined && costPrice !== null
+            ? Number(costPrice)
             : Number(existing.cost_price);
+
+        const newSalePrice =
+          sale_price !== undefined && sale_price !== null
+            ? Number(sale_price)
+            : Number(existing.sale_price);
+
+        const newUnits =
+          units !== undefined && units !== null
+            ? Number(existing.no_of_units) + Number(units)
+            : Number(existing.no_of_units);
 
         const { data: updated, error: updateErr } = await supabase
           .from("inventory")
           .update({
             cost_price: newCostPrice,
-            no_of_units: Number(existing.no_of_units) + Number(units),
-            sale_price: existing.sale_price, // ✅ keep previous sale price
+            sale_price: newSalePrice,
+            no_of_units: newUnits,
           })
           .eq("id", existing.id)
           .select()

@@ -9,6 +9,7 @@ export default function Navbar() {
   const [loggingOut, setLoggingOut] = useState(false)
   const [exportingOrders, setExportingOrders] = useState(false)
   const [exportingInventory, setExportingInventory] = useState(false)
+  const [exportingLedger, setExportingLedger] = useState(false)
 
   const router = useRouter()
   const pathname = usePathname()
@@ -27,33 +28,40 @@ export default function Navbar() {
   const isLoginPage = pathname === "/login"
 
   // 🔽 Export CSV helpers (with loading state)
-  const exportCSV = async (type: "orders" | "inventory") => {
-    if (type === "orders") setExportingOrders(true)
-    if (type === "inventory") setExportingInventory(true)
+const exportFile = async (type: "orders" | "inventory" | "ledger") => {
+  if (type === "orders") setExportingOrders(true)
+  if (type === "inventory") setExportingInventory(true)
+  if (type === "ledger") setExportingLedger(true)
 
-    try {
-      const res = await fetch(`/api/export?type=${type}`)
-      if (!res.ok) throw new Error("Failed to export")
+  try {
+    const url =
+      type === "ledger"
+        ? "/api/export/ledger"
+        : `/api/export?type=${type}`
 
-      const blob = await res.blob()
-      const url = window.URL.createObjectURL(blob)
+    const res = await fetch(url)
+    if (!res.ok) throw new Error("Failed to export")
 
-      const link = document.createElement("a")
-      link.href = url
-      link.download = `${type}.csv`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
+    const blob = await res.blob()
+    const downloadUrl = window.URL.createObjectURL(blob)
 
-      setTimeout(() => window.URL.revokeObjectURL(url), 1000)
-    } catch (err) {
-      console.error(err)
-      alert("Export failed, please try again.")
-    } finally {
-      if (type === "orders") setExportingOrders(false)
-      if (type === "inventory") setExportingInventory(false)
-    }
+    const link = document.createElement("a")
+    link.href = downloadUrl
+    link.download = `${type}.xlsx`   // ✅ always XLSX
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    setTimeout(() => window.URL.revokeObjectURL(downloadUrl), 1000)
+  } catch (err) {
+    console.error(err)
+    alert("Export failed, please try again.")
+  } finally {
+    if (type === "orders") setExportingOrders(false)
+    if (type === "inventory") setExportingInventory(false)
+    if (type === "ledger") setExportingLedger(false)
   }
+}
 
   return (
     <nav className="bg-slate-800 px-6 py-3 text-white">
@@ -92,10 +100,16 @@ export default function Navbar() {
                   Inventory
                 </Link>
               </li>
+              <li>
+                <Link href="/finance" className="hover:text-gray-300">
+                  Finance
+                </Link>
+              </li>
+
               {/* 🔽 Export buttons */}
               <li>
                 <button
-                  onClick={() => exportCSV("orders")}
+                  onClick={() => exportFile("orders")}
                   disabled={exportingOrders}
                   className={`px-3 py-2 rounded-lg font-medium ${
                     exportingOrders
@@ -108,7 +122,7 @@ export default function Navbar() {
               </li>
               <li>
                 <button
-                  onClick={() => exportCSV("inventory")}
+                  onClick={() => exportFile("inventory")}
                   disabled={exportingInventory}
                   className={`px-3 py-2 rounded-lg font-medium ${
                     exportingInventory
@@ -117,6 +131,19 @@ export default function Navbar() {
                   }`}
                 >
                   {exportingInventory ? "Exporting..." : "Export Inventory CSV"}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => exportFile("ledger")}
+                  disabled={exportingLedger}
+                  className={`px-3 py-2 rounded-lg font-medium ${
+                    exportingLedger
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700"
+                  }`}
+                >
+                  {exportingLedger ? "Exporting..." : "Export Ledger CSV"}
                 </button>
               </li>
               <li>
@@ -159,10 +186,16 @@ export default function Navbar() {
                   Inventory
                 </Link>
               </li>
+              <li>
+                <Link href="/finance" className="hover:text-gray-300">
+                  Finance
+                </Link>
+              </li>
+
               {/* 🔽 Export buttons mobile */}
               <li>
                 <button
-                  onClick={() => exportCSV("orders")}
+                  onClick={() => exportFile("orders")}
                   disabled={exportingOrders}
                   className={`px-3 py-2 rounded-lg font-medium w-full ${
                     exportingOrders
@@ -175,7 +208,7 @@ export default function Navbar() {
               </li>
               <li>
                 <button
-                  onClick={() => exportCSV("inventory")}
+                  onClick={() => exportFile("inventory")}
                   disabled={exportingInventory}
                   className={`px-3 py-2 rounded-lg font-medium w-full ${
                     exportingInventory
@@ -186,6 +219,19 @@ export default function Navbar() {
                   {exportingInventory
                     ? "Exporting..."
                     : "Export Inventory CSV"}
+                </button>
+              </li>
+              <li>
+                <button
+                  onClick={() => exportFile("ledger")}
+                  disabled={exportingLedger}
+                  className={`px-3 py-2 rounded-lg font-medium w-full ${
+                    exportingLedger
+                      ? "bg-gray-500 cursor-not-allowed"
+                      : "bg-purple-600 hover:bg-purple-700"
+                  }`}
+                >
+                  {exportingLedger ? "Exporting..." : "Export Ledger CSV"}
                 </button>
               </li>
               <li>

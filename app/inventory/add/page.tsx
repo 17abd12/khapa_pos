@@ -6,13 +6,16 @@ import toast, { Toaster } from "react-hot-toast";
 import { Item } from "../types";
 import ItemCard from "../components/ItemCard";
 import AddItemModal from "../components/AddItemModal";
-import UpdateItemModal from "../components/UpdateItemModal";
+import UpdateUnitsModal from "../components/UpdateUnitModal";
+// import UpdatePricesModal from "../components/UpdatePricesModal";
+import UpdatePricesModal from "../components/UpdatePricesModal";
 import ActionButtons from "../components/ActionButton";
 
 export default function InventoryPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [showModal, setShowModal] = useState(false);
-  const [showUpdateModal, setShowUpdateModal] = useState(false);
+  const [showUnitsModal, setShowUnitsModal] = useState(false);
+  const [showPricesModal, setShowPricesModal] = useState(false);
   const [existingItems, setExistingItems] = useState<Item[]>([]);
   const [loadingConfirm, setLoadingConfirm] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
@@ -66,24 +69,41 @@ export default function InventoryPage() {
     setShowModal(false);
   };
 
-  const handlePrepareUpdate = () => {
-    if (!updateData.id) return;
+  // Update Units
+  const handleUpdateUnits = () => {
+    if (!updateData.id || !updateData.units) return;
 
     const selectedItem = existingItems.find((i) => i.id === updateData.id);
     if (!selectedItem) return;
 
     const updatedItem: Item = {
-      id: Date.now().toString(),
-      name: selectedItem.name,
-      costPrice: parseFloat(updateData.costPrice) || selectedItem.costPrice,
-      sale_price: selectedItem.sale_price,
-      units: parseInt(updateData.units) || selectedItem.units,
+      ...selectedItem,
+      units: parseInt(updateData.units),
     };
 
     setItems([...items, updatedItem]);
     setUpdateData({ id: "", costPrice: "", salePrice: "", units: "" });
-    setShowUpdateModal(false);
-    toast.success("✅ Item updated locally! Confirm inventory to save.");
+    setShowUnitsModal(false);
+    toast.success("✅ Units updated locally! Confirm inventory to save.");
+  };
+
+  // Update Prices
+  const handleUpdatePrices = () => {
+    if (!updateData.id || !updateData.costPrice || !updateData.salePrice) return;
+
+    const selectedItem = existingItems.find((i) => i.id === updateData.id);
+    if (!selectedItem) return;
+
+    const updatedItem: Item = {
+      ...selectedItem,
+      costPrice: parseFloat(updateData.costPrice),
+      sale_price: parseFloat(updateData.salePrice),
+    };
+
+    setItems([...items, updatedItem]);
+    setUpdateData({ id: "", costPrice: "", salePrice: "", units: "" });
+    setShowPricesModal(false);
+    toast.success("✅ Prices updated locally! Confirm inventory to save.");
   };
 
   const handleDelete = (id: string) => setItems(items.filter((item) => item.id !== id));
@@ -125,12 +145,20 @@ export default function InventoryPage() {
 
       <ActionButtons
         onAdd={() => setShowModal(true)}
-        onUpdate={() => setShowUpdateModal(true)}
+        onUpdate={() => setShowUnitsModal(true)} // keep original update for units
         onConfirm={handleConfirmInventory}
         itemsLength={items.length}
         loadingConfirm={loadingConfirm}
         confirmed={confirmed}
       />
+
+      {/* Extra button for price updates */}
+      <button
+        onClick={() => setShowPricesModal(true)}
+        className="mb-4 px-4 py-2 bg-purple-600 hover:bg-purple-700 rounded text-white"
+      >
+        Update Prices
+      </button>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {items.map((item) => (
@@ -146,13 +174,22 @@ export default function InventoryPage() {
         onSave={handleSaveItem}
       />
 
-      <UpdateItemModal
-        show={showUpdateModal}
-        onClose={() => setShowUpdateModal(false)}
+      <UpdateUnitsModal
+        show={showUnitsModal}
+        onClose={() => setShowUnitsModal(false)}
         updateData={updateData}
         setUpdateData={setUpdateData}
         existingItems={existingItems}
-        onUpdate={handlePrepareUpdate}
+        onUpdate={handleUpdateUnits}
+      />
+
+      <UpdatePricesModal
+        show={showPricesModal}
+        onClose={() => setShowPricesModal(false)}
+        updateData={updateData}
+        setUpdateData={setUpdateData}
+        existingItems={existingItems}
+        onUpdate={handleUpdatePrices}
       />
     </div>
   );
