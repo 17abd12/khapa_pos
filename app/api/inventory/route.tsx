@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/libs/supabaseClient";
 import { verifyJwt } from "@/libs/jwt";
+import { addInventoryToSheet, findInventoryRowIndex, updateExistingInventoryInSheet } from "@/libs/sheets";
 
 export async function GET() {
   try {
@@ -88,6 +89,14 @@ export async function POST(req: Request) {
           ])
           .select()
           .single();
+        // add new inventory to google sheets
+        await addInventoryToSheet([{
+          iten_name: name,
+          units: units ?? 0,
+          sale_price: sale_price ?? 0,
+          cost_price: costPrice ?? 0,
+          userId: String(payload.name),
+        }])
 
         if (insertErr) {
           console.error("❌ Insert error:", insertErr);
@@ -126,14 +135,25 @@ export async function POST(req: Request) {
           .select()
           .single();
 
+        const rowIndex = await findInventoryRowIndex(name)
+        if (rowIndex) {
+          await updateExistingInventoryInSheet({
+            iten_name: name,
+            units: newUnits,
+            sale_price: newSalePrice,
+            cost_price: newCostPrice,
+            userId: String(payload.name),
+          }, rowIndex)
+        }
+
         if (updateErr) {
           console.error("❌ Update error:", updateErr);
           return NextResponse.json(
             { message: "Failed to update", error: updateErr.message },
             { status: 500 }
           );
-        }
-
+        }    
+          
         results.push(updated);
       }
     }

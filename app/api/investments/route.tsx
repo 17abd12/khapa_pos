@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/libs/supabaseClient";
 import { verifyJwt } from "@/libs/jwt";
+import { addInvestmentsToSheet } from "@/libs/sheets";
 
 export async function POST(req: Request) {
   try {
@@ -34,6 +35,9 @@ export async function POST(req: Request) {
       .single();
 
     if (error) throw error;
+
+    // add investments to sheets
+    await addInvestmentsToSheet([{ amount, description, userId: String(payload.name) }]);
 
     return NextResponse.json({ message: "Investment added successfully!", data }, { status: 201 });
   } catch (err: any) {
