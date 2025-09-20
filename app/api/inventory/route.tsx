@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/libs/supabaseClient";
 import { verifyJwt } from "@/libs/jwt";
-import { addInventoryToSheet, findInventoryRowIndex, updateExistingInventoryInSheet } from "@/libs/sheets";
+import { addInventoryLogsToSheet, addInventoryToSheet, findInventoryRowIndex, updateExistingInventoryInSheet } from "@/libs/sheets";
 
 export async function GET() {
   try {
@@ -157,6 +157,14 @@ export async function POST(req: Request) {
         results.push(updated);
       }
     }
+
+    await addInventoryLogsToSheet(items.map((item: any) => ({
+      iten_name: item.name,
+      units: item.units ?? 0,
+      sale_price: item.sale_price ?? 0,
+      cost_price: item.costPrice ?? 0,
+      userId: String(payload.name),
+    })))
 
     return NextResponse.json(
       { message: "Inventory processed successfully!", data: results },

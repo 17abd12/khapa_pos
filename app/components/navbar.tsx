@@ -91,11 +91,6 @@ const exportFile = async (type: "orders" | "inventory" | "ledger") => {
                 </Link>
               </li>
               <li>
-                <Link href="/inventory/add" className="hover:text-gray-300">
-                  Add Inventory
-                </Link>
-              </li>
-              <li>
                 <Link href="/inventory/view" className="hover:text-gray-300">
                   Inventory
                 </Link>
@@ -103,6 +98,11 @@ const exportFile = async (type: "orders" | "inventory" | "ledger") => {
               <li>
                 <Link href="/finance" className="hover:text-gray-300">
                   Finance
+                </Link>
+              </li>
+              <li>
+                <Link href="/inventory/add" className="hover:text-gray-300">
+                  Add Inventory
                 </Link>
               </li>
 
@@ -117,7 +117,7 @@ const exportFile = async (type: "orders" | "inventory" | "ledger") => {
                       : "bg-blue-600 hover:bg-blue-700"
                   }`}
                 >
-                  {exportingOrders ? "Exporting..." : "Export Orders CSV"}
+                  {exportingOrders ? "Exporting..." : "Export Orders"}
                 </button>
               </li>
               <li>
@@ -130,7 +130,7 @@ const exportFile = async (type: "orders" | "inventory" | "ledger") => {
                       : "bg-green-600 hover:bg-green-700"
                   }`}
                 >
-                  {exportingInventory ? "Exporting..." : "Export Inventory CSV"}
+                  {exportingInventory ? "Exporting..." : "Export Inventory"}
                 </button>
               </li>
               <li>
@@ -143,7 +143,7 @@ const exportFile = async (type: "orders" | "inventory" | "ledger") => {
                       : "bg-purple-600 hover:bg-purple-700"
                   }`}
                 >
-                  {exportingLedger ? "Exporting..." : "Export Ledger CSV"}
+                  {exportingLedger ? "Exporting..." : "Export Ledger"}
                 </button>
               </li>
               <li>

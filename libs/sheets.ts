@@ -107,6 +107,25 @@ export const updateExistingInventoryInSheet = async (row: InventorySheetForm, ro
   })
 }
 
+export const addInventoryLogsToSheet = async (rows: InventorySheetForm[]) => {
+  const sheets = getGoogleSheets()
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: process.env.GOOGLE_SHEET_ID,
+    range: 'Inventory Logs',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: rows.map(r => [
+        r.iten_name,
+        r.units,
+        r.sale_price,
+        r.cost_price,
+        r.userId,
+        getNowPK()
+      ])
+    }
+  })
+}
+
 export const addExpensesToSheet = async (rows: { description: string, amount: number, userId: string }[]) => {
   const sheets = getGoogleSheets()
   await sheets.spreadsheets.values.append({
