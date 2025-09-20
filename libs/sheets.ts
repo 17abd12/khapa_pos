@@ -51,7 +51,7 @@ export const addSalesToSheet = async (rows: SalesSheetForm[]) => {
         r.price,
         r.payment_method,
         r.userId,
-        new Date().toLocaleString()
+        new Date().toISOString().replace("T", " ").replace("Z", "")
       ])
     }
   })
@@ -70,7 +70,7 @@ export const addInventoryToSheet = async (rows: InventorySheetForm[]) => {
         r.sale_price,
         r.cost_price,
         r.userId,
-        new Date().toLocaleString()
+        new Date().toISOString().replace("T", " ").replace("Z", "")
       ])
     }
   })
@@ -89,7 +89,7 @@ export const updateExistingInventoryInSheet = async (row: InventorySheetForm, ro
         row.sale_price,
         row.cost_price,
         row.userId,
-        new Date().toLocaleString()
+        new Date().toISOString().replace("T", " ").replace("Z", "")
       ]]
     }
   })
@@ -106,7 +106,7 @@ export const addExpensesToSheet = async (rows: { description: string, amount: nu
         r.description,
         r.amount,
         r.userId,
-        new Date().toLocaleString()
+        new Date().toISOString().replace("T", " ").replace("Z", "")
       ])
     }
   })
@@ -123,7 +123,7 @@ export const addInvestmentsToSheet = async (rows: { description: string, amount:
         r.description,
         r.amount,
         r.userId,
-        new Date().toLocaleString()
+        new Date().toISOString().replace("T", " ").replace("Z", "")
       ])
     }
   })
@@ -133,13 +133,12 @@ export const findInventoryRowIndex = async (itemName: string) => {
   const sheets = getGoogleSheets()
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: process.env.GOOGLE_SHEET_ID,
-    range: 'Inventory!A:A', // only first column with item names
+    range: 'Inventory!A:A',
   })
 
   const rows = res.data.values || []
   const index = rows.findIndex(r => r[0] === itemName)
 
   if (index === -1) return null
-  // +1 because Sheets rows are 1-based, and +1 again if you have headers
   return index + 1
 }

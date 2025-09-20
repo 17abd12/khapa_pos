@@ -3,7 +3,7 @@ import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { supabase } from "@/libs/supabaseClient"
 import { verifyJwt } from "@/libs/jwt"
-import { addSalesToSheet } from "@/libs/sheets";
+import { addSalesToSheet, findInventoryRowIndex, updateExistingInventoryInSheet } from "@/libs/sheets";
 
 type IncomingItem = { id: string; quantity: number }
 
@@ -134,6 +134,21 @@ const token = cookieStore.get("token")?.value;
       payment_method: paymentMethod || "Cash",
       userId: userId,
     })))
+
+    // update inventory sheet as well
+    await Promise.all(invRows.map(async (row) => {
+      const newUnits = row.no_of_units - qtyMap.get(row.id)!
+      const rowIndex = await findInventoryRowIndex(row.name)
+      if (rowIndex !== null && rowIndex !== undefined) {
+        await updateExistingInventoryInSheet({
+          iten_name: row.name, 
+          units: newUnits,
+          sale_price: row.sale_price,
+          cost_price: row.cost_price,
+          userId: userId,
+        }, rowIndex)
+      }
+    }))
 
     return NextResponse.json({ message: "Order placed", orderId: order.id, paymentMethod: order.paymentMethod }, { status: 201 })
   } catch (e: any) {
