@@ -16,6 +16,18 @@ type InventorySheetForm = {
     userId: string
 }
 
+const getNowPK = () =>
+  new Date().toLocaleString("en-GB", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+    hour12: true,
+    timeZone: "Asia/Karachi",
+  });
+
 export const getGoogleSheets = () => {
 
   const auth = new google.auth.GoogleAuth({
@@ -51,7 +63,7 @@ export const addSalesToSheet = async (rows: SalesSheetForm[]) => {
         r.price,
         r.payment_method,
         r.userId,
-        new Date().toISOString().replace("T", " ").replace("Z", "")
+        getNowPK()
       ])
     }
   })
@@ -70,7 +82,7 @@ export const addInventoryToSheet = async (rows: InventorySheetForm[]) => {
         r.sale_price,
         r.cost_price,
         r.userId,
-        new Date().toISOString().replace("T", " ").replace("Z", "")
+        getNowPK()
       ])
     }
   })
@@ -89,7 +101,7 @@ export const updateExistingInventoryInSheet = async (row: InventorySheetForm, ro
         row.sale_price,
         row.cost_price,
         row.userId,
-        new Date().toISOString().replace("T", " ").replace("Z", "")
+        getNowPK()
       ]]
     }
   })
@@ -106,7 +118,7 @@ export const addExpensesToSheet = async (rows: { description: string, amount: nu
         r.description,
         r.amount,
         r.userId,
-        new Date().toISOString().replace("T", " ").replace("Z", "")
+        getNowPK()
       ])
     }
   })
@@ -123,7 +135,7 @@ export const addInvestmentsToSheet = async (rows: { description: string, amount:
         r.description,
         r.amount,
         r.userId,
-        new Date().toISOString().replace("T", " ").replace("Z", "")
+        getNowPK()
       ])
     }
   })
